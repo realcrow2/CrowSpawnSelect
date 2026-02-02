@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Map pin generator</title>
+        <link rel="stylesheet" href="css/generator.css"> 
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-6">
+                    <h3>Map pin generator <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-geo-alt" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M12.166 8.94C12.696 7.867 13 6.862 13 6A5 5 0 0 0 3 6c0 .862.305 1.867.834 2.94.524 1.062 1.234 2.12 1.96 3.07A31.481 31.481 0 0 0 8 14.58l.208-.22a31.493 31.493 0 0 0 1.998-2.35c.726-.95 1.436-2.008 1.96-3.07zM8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10z"/>
+                        <path fill-rule="evenodd" d="M8 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                      </svg></h3>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text">Coordinates</span>
+                        </div>
+                        <input id="coords" type="text" name="coords" aria-label="Coordinates" class="form-control">
+                    </div>
+                    <p><small class="text-muted">Coordinates from the GTA5 map. Format: x,y,z</small></p>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text">Spawn name</span>
+                        </div>
+                        <input id="name" type="text" name="spawnName" aria-label="Spawn name" class="form-control">
+                    </div>
+                    <p><small class="text-muted">Name of the spawn location. Will be used as an identifier of actual spawn location.</small></p>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text">Pin</span>
+                        </div>
+                        <input id="pin" type="text" name="pin" aria-label="Pin" class="form-control">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Selected pin</span>
+                          </div>
+                        <input id="pinSelected" type="text" name="pinSel" aria-label="Pin" class="form-control">
+                    </div>
+                    <p><small class="text-muted">ID names of the preloaded pins in <kbd>index.html</kbd></small></p>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text">Image name</span>
+                        </div>
+                        <input id="imageName" type="text" name="coords" aria-label="Image name" class="form-control">
+                    </div>
+                    <p><small class="text-muted">Name of the image located in <kbd>images/</kbd></small></p>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text">Description</span>
+                        </div>
+                        <input id="desc" type="text" name="coords" aria-label="Image name" class="form-control">
+                    </div>
+                    <p><small class="text-muted">Description of the spawn location.</small></p>
+                    <button id="add" type="button" class="btn btn-primary float-right"><svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-plus-square-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/>
+                      </svg> Add to list</button>
+                </div>
+                <div class="col-6">
+                        <h5>Map code</h5>
+                        <label for="resultlabel">Copy the text below and paste into <kbd>mapdata.js</kbd></label>
+                        <pre id="result" class="form-control">
+                        </pre>
+                </div>
+            </div>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+        <script>
+                    let dotMap = {
+              spawns:[]
+          }
+          function displayCode(){
+              document.getElementById("result").innerHTML = "let dotMap = { spawns:"+JSON.stringify(dotMap.spawns)+"}";
+          }
+          document.getElementById("add").addEventListener("click", () => {
+              
+          let coords = document.getElementById("coords").value;
+
+          coords = coords.split(",");
+
+          let x = coords[0].trim();
+          let y = coords[1].trim();
+
+          let name = document.getElementById("name").value;
+          let pin = document.getElementById("pin").value;
+          let pinSel = document.getElementById("pinSelected").value;
+          let image = document.getElementById("imageName").value;
+          let desc = document.getElementById("desc").value;
+
+          let spawn = {
+              name: name,
+              x: parseInt(y)*-1,
+              y: parseInt(x)*-1,
+              icon:pin,
+              iconSelected:pinSel,
+              image:"images/"+image,
+              description:desc
+          }
+
+          dotMap.spawns.push(spawn);
+
+          displayCode();
+          })
+        </script>
+    </body>
+</html>

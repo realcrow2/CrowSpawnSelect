@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <title>Spawn selection map</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="css/stylesheet.css" />
+        <link rel="stylesheet" href="libraries/bootstrap-4.5.2.min.css">
+
+    </head>
+    <body>
+        <div id="mainContainer">
+            <canvas id="map"></canvas>
+            <img id="imageDay" src="images/map_day.jpg" />
+            <img id="imageNight" src="images/map_night.jpg"/>
+            <!--Put the preload icons here-->
+            <img id="pin" class="icons" src="images/placeholder.svg" />
+            <img id="jobPin" class="icons" src="images/job.svg" />
+            
+            <img id="customPin" class="icons" src="images/custom.svg" />
+            <img id="lastPin" class="icons" src="images/last.svg" />
+            <img id="pinSel" class="icons" src="images/placeholderchecked.svg" />
+            <!--End preload icons-->
+            <div id="infoBox">
+                <div id="actualInfoBox" class="card shadow">
+                    <img id="infoBoxImage" src="" class="card-img-top" alt="...">
+                    <div class="card-body">
+                    <h5 id="infoBoxTitle" class="card-title"></h5>
+                      <p id="infoBoxDescription" class="card-text"></p>
+                      <button id="spawn" type="button" class="btn btn-success w-100" data-locale="SPAWN">Spawn</button>
+                    </div>
+                </div>
+                <div id="customLocations" class="btn-group w-100" role="group" aria-label="Basic example">
+                    <button id="lastPosition" type="button" class="btn btn-primary" data-locale="LAST_POSITION">Last Pos</button>
+                    <button id="jobPosition" type="button" class="btn btn-primary"></button>
+                    <button id="customPosition" type="button" class="btn btn-primary"></button>
+                </div>
+            </div>
+            <div id="fullList">
+                <ul id="actualFullList" class="list-group scrollbar">
+                    <li class="list-group-item list-group-item-action active"><b data-locale="LIST_OF_SPAWNS">List of spawn locations</b></li>
+                </ul>
+            </div>
+            <div id="map-controls">
+                <button id="reset-scale" type="button" class="btn btn-outline-light" data-locale="RESET_SCALE">
+                    Reset Scale
+                </button>
+                <span id="map-controls-zoom" class="text-light">1x</span>
+            </div>
+        </div>
+        <script src="../configs/mapdata.js"></script>
+        <script src="../configs/locales_ui.js"></script>
+        <script src="libraries/jquery-3.5.1.slim.min.js"></script>
+        <script src="libraries/popper-1.16.1.min.js"></script>
+        <script src="libraries/bootstrap-4.5.2.min.js"></script>
+        <script src="js/script.js"></script>
+        <script>
+            // Listen for messages from Lua to show/hide UI
+            
+            // Function to ensure UI elements are visible
+            function ensureUIElementsVisible() {
+                const spawnBtn = document.getElementById('spawn');
+                const infoBox = document.getElementById('infoBox');
+                const actualInfoBox = document.getElementById('actualInfoBox');
+                
+                if (infoBox) {
+                    infoBox.style.display = 'block';
+                    infoBox.style.visibility = 'visible';
+                    infoBox.style.opacity = '1';
+                }
+                
+                if (actualInfoBox) {
+                    actualInfoBox.style.display = 'block';
+                    actualInfoBox.style.visibility = 'visible';
+                    actualInfoBox.style.opacity = '1';
+                }
+                
+                if (spawnBtn) {
+                    spawnBtn.style.display = 'block';
+                    spawnBtn.style.visibility = 'visible';
+                    spawnBtn.style.opacity = '1';
+                    spawnBtn.style.pointerEvents = 'auto';
+                    spawnBtn.style.cursor = 'pointer';
+                }
+            }
+            
+            function showUI() {
+                const container = document.getElementById('mainContainer');
+                if (container) {
+                    container.style.display = 'block';
+                    // Force a reflow
+                    container.offsetHeight;
+                    container.style.opacity = '1';
+                    
+                    // Ensure infoBox and spawn button are visible
+                    ensureUIElementsVisible();
+                    
+                    // Also ensure after a short delay
+                    setTimeout(ensureUIElementsVisible, 100);
+                    setTimeout(ensureUIElementsVisible, 500);
+                    
+                    return true;
+                }
+                return false;
+            }
+            
+            function hideUI() {
+                const container = document.getElementById('mainContainer');
+                if (container) {
+                    container.style.opacity = '0';
+                    setTimeout(function() {
+                        container.style.display = 'none';
+                    }, 300);
+                }
+            }
+            
+            // Set up message listener immediately
+            window.addEventListener('message', function(event) {
+                const data = event.data;
+                
+                if (data && data.type === 'open') {
+                    showUI();
+                } else if (data && data.type === 'close') {
+                    hideUI();
+                }
+            });
+            
+            // Spawn button click handler
+            function handleSpawnClick(event) {
+                // Prevent any default behavior
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                let locationName = null;
+                
+                // Try to get location name from global variables (obfuscated script)
+                if (typeof clicked !== 'undefined' && clicked >= 0 && typeof dotMap !== 'undefined' && dotMap.spawns && dotMap.spawns[clicked]) {
+                    locationName = dotMap.spawns[clicked].name;
+                } else {
+                    // Fallback: try to get location name from info box title
+                    const infoBoxTitle = document.getElementById('infoBoxTitle');
+                    if (infoBoxTitle && infoBoxTitle.textContent && infoBoxTitle.textContent.trim()) {
+                        locationName = infoBoxTitle.textContent.trim();
+                    }
+                }
+                
+                if (locationName) {
+                    // FiveM NUI callback URL format: https://{resourceName}/{callbackName}
+                    // Resource name must match the folder name exactly (case-sensitive in some cases)
+                    // The folder is CrowSpawnSelect, but FiveM may normalize it
+                    const resourceName = 'CrowSpawnSelect';
+                    const callbackUrl = `https://${resourceName}/spawn`;
+                    
+                    // Send spawn request to Lua client via NUI callback
+                    fetch(callbackUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json; charset=UTF-8',
+                        },
+                        body: JSON.stringify({
+                            name: locationName
+                        })
+                    }).then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            return response.text().then(text => {
+                                throw new Error(`Spawn request failed with status ${response.status}: ${text}`);
+                            });
+                        }
+                    }).then(data => {
+                        // UI will be closed by the Lua client
+                    }).catch(error => {
+                        // Try lowercase version as fallback
+                        if (resourceName !== resourceName.toLowerCase()) {
+                            fetch(`https://${resourceName.toLowerCase()}/spawn`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json; charset=UTF-8',
+                                },
+                                body: JSON.stringify({
+                                    name: locationName
+                                })
+                            }).then(response => {
+                                if (response.ok) {
+                                    return response.json();
+                                }
+                                throw new Error('Lowercase attempt also failed');
+                            }).then(data => {
+                                // Success
+                            }).catch(err => {
+                                // Silent fail
+                            });
+                        }
+                    });
+                }
+            }
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                ensureUIElementsVisible();
+                
+                // Add spawn button click handler
+                // Attach with capture phase to run before other handlers
+                const spawnButton = document.getElementById('spawn');
+                if (spawnButton) {
+                    spawnButton.addEventListener('click', handleSpawnClick, true);
+                    // Also attach in bubble phase as backup
+                    spawnButton.addEventListener('click', handleSpawnClick, false);
+                    
+                    // Also try attaching after a delay in case obfuscated script loads later
+                    setTimeout(() => {
+                        const btn = document.getElementById('spawn');
+                        if (btn) {
+                            btn.addEventListener('click', handleSpawnClick, true);
+                        }
+                    }, 2000);
+                }
+                
+                // Also ensure visibility after delays to catch any timing issues
+                setTimeout(ensureUIElementsVisible, 500);
+                setTimeout(ensureUIElementsVisible, 1000);
+                setTimeout(ensureUIElementsVisible, 2000);
+            });
+            
+            // Expose function globally for debugging
+            window.showSpawnUI = showUI;
+            window.hideSpawnUI = hideUI;
+            window.handleSpawnClick = handleSpawnClick;
+        </script>
+    </body>
+</html>
