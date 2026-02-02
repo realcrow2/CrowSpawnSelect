@@ -1,7 +1,7 @@
 # Crow Spawn Select
 
 A FiveM spawn selector resource for vMenu standalone servers. This resource displays a beautiful interactive map when players first join the server, allowing them to choose their spawn location.
-<img width="2559" height="1439" alt="image" src="https://github.com/user-attachments/assets/fd498112-f6be-4105-9b13-ee3d58263cb7" />
+<img width="2559" height="1439" alt="image" src="https://github.com/user-attachments/assets/fa8c543c-106c-4e11-a182-cee3e582ca3f" />
 
 ## Features
 
@@ -14,8 +14,8 @@ A FiveM spawn selector resource for vMenu standalone servers. This resource disp
 
 ## Installation
 
-1. Place the `crow_spawnselect` folder in your `resources` directory
-2. Add `ensure crow_spawnselect` to your `server.cfg`
+1. Place the `CrowSpawnSelect` folder in your `resources` directory
+2. Add `ensure CrowSpawnSelect` to your `server.cfg`
 3. Restart your server
 
 ## Configuration
