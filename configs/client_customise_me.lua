@@ -64,49 +64,27 @@ Citizen.CreateThread(function()
         end)
     
     elseif Config.Framework == 'vrp' or Config.Framework == 'none' then
-        -- For standalone/vMenu servers, show spawn selector immediately when player joins
+        -- For standalone/vMenu servers, show spawn selector as soon as the player is ready
         local hasShownSpawn = false
-        
-        -- Simple method: Wait a fixed time after resource starts, then show UI
+
+        local function showSpawnSelect()
+            if hasShownSpawn then return end
+            hasShownSpawn = true
+            TriggerEvent('crow_spawnselect:OpenUI')
+        end
+
         Citizen.CreateThread(function()
-            -- Wait for session to be active
             while not NetworkIsSessionStarted() do
-                Citizen.Wait(100)
+                Citizen.Wait(0)
             end
-            
-            -- Wait for player to exist
-            local attempts = 0
-            while not DoesEntityExist(PlayerPedId()) and attempts < 50 do
-                Citizen.Wait(200)
-                attempts = attempts + 1
+
+            while not DoesEntityExist(PlayerPedId()) do
+                Citizen.Wait(0)
             end
-            
-            -- Wait additional time for everything to load
-            Citizen.Wait(5000)
-            
-            if not hasShownSpawn then
-                hasShownSpawn = true
-                print("^2[crow_spawnselect] Opening spawn selector UI^0")
-                
-                -- Fade out screen
-                DoScreenFadeOut(0)
-                Citizen.Wait(1000)
-                
-                -- Open the spawn selector
-                TriggerEvent('crow_spawnselect:OpenUI')
-            end
-        end)
-        
-        -- Backup: Listen for player spawning event
-        AddEventHandler('playerSpawned', function()
-            Citizen.Wait(2000)
-            if not hasShownSpawn then
-                hasShownSpawn = true
-                print("^2[crow_spawnselect] Player spawned, opening spawn selector...^0")
-                DoScreenFadeOut(0)
-                Citizen.Wait(1000)
-                TriggerEvent('crow_spawnselect:OpenUI')
-            end
+
+            -- Brief wait for NUI page to finish loading
+            Citizen.Wait(250)
+            showSpawnSelect()
         end)
 
         
