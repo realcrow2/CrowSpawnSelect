@@ -33,30 +33,21 @@ function OpenSpawnSelectUI(coords)
         dayhours = Config.DayHours
     }
     
-    -- Request player data from server
-    TriggerServerEvent('crow_spawnselect:GetPlayerData')
+    -- Restore screen visibility if a prior fade left it black
+    if IsScreenFadedOut() then
+        DoScreenFadeIn(0)
+    end
+
+    -- Request player data from server (time is client-only, so pass it along)
+    TriggerServerEvent('crow_spawnselect:GetPlayerData', currentHour)
     
-    -- Wait for NUI to be ready - give it time to load
-    Citizen.Wait(1500)
-    
-    -- Send UI data to NUI to show it
-    print("^2[crow_spawnselect] Sending open message to NUI^0")
-    SendNUIMessage({
-        type = 'open',
-        data = playerData
-    })
-    
-    -- Send it again after a short delay to ensure it's received
-    Citizen.Wait(500)
-    SendNUIMessage({
-        type = 'open',
-        data = playerData
-    })
-    
-    -- Wait a bit more then enable focus
-    Citizen.Wait(300)
+    -- Show spawn menu immediately
     SetNuiFocus(true, true)
-    print("^2[crow_spawnselect] NUI Focus enabled^0")
+    SendNUIMessage({
+        type = 'open',
+        data = playerData
+    })
+    print("^2[crow_spawnselect] Spawn selector UI opened^0")
 end
 
 -- Handle spawn button click from NUI
@@ -182,4 +173,3 @@ Citizen.CreateThread(function()
         end
     end
 end)
-
